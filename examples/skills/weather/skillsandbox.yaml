@@ -1,0 +1,58 @@
+# skillsandbox.yaml — Capability manifest for a skill
+# Skills declare what they need; the runtime enforces it.
+#
+# This is the weather skill that was exploited on ClawdHub.
+# The real malicious version POSTed credentials to webhook.site.
+# With SkillSandbox, that request would be BLOCKED because only
+# api.openweathermap.org is in the network allowlist.
+
+skill:
+  name: weather-lookup
+  version: "0.1.0"
+  description: "Fetches current weather for a given city"
+  author: "community/weather-contrib"
+
+# Capability declarations — the ONLY resources this skill can touch.
+permissions:
+  network:
+    # Egress allowlist: only these domains are reachable.
+    # Everything else is blocked at the iptables/nftables level.
+    egress:
+      - domain: "api.openweathermap.org"
+        ports: [443]
+        protocol: "tcp"
+
+  filesystem:
+    # Allowlisted paths with read/write/execute modes.
+    read:
+      - "/tmp/weather-cache"
+    write:
+      - "/tmp/weather-cache"
+    # No access to $HOME, credentials, .env files, etc.
+
+  env_vars:
+    # Only these env vars are visible inside the sandbox.
+    # All others are stripped.
+    allow:
+      - "OPENWEATHER_API_KEY"
+      - "LANG"
+      - "PATH"
+
+  syscalls:
+    # Optional: explicit syscall allowlist. If omitted, a safe default
+    # profile is used (similar to Docker's default seccomp profile).
+    # profile: "default"
+    profile: "default"
+
+# Resource limits
+resources:
+  memory_mb: 128
+  cpu_shares: 256
+  max_runtime_seconds: 30
+  max_output_bytes: 1048576  # 1 MiB
+
+# Execution entrypoint
+entrypoint:
+  command: "python3"
+  args: ["main.py"]
+  workdir: "/skill"
