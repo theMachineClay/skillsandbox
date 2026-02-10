@@ -41,16 +41,36 @@ impl NetworkEnforcer {
         tracer: &Tracer,
         dry_run: bool,
     ) -> Result<Self, NetworkEnforcerError> {
-        let chain_name = format!(
-            "SKILLSANDBOX_{}",
-            manifest.skill.name.to_uppercase().replace('-', "_")
-        );
+        // iptables chain names must be < 29 characters.
+        // Use a short hash to keep it unique but within the limit.
+        let raw_name = manifest
+            .skill
+            .name
+            .to_uppercase()
+            .replace('-', "_")
+            .replace(' ', "_");
+        let chain_name = if raw_name.len() > 20 {
+            // Take first 12 chars + 8 char hash to stay under 28
+            let hash = &format!("{:08X}", fxhash(&manifest.skill.name));
+            format!("SSB_{}_{}", &raw_name[..12], hash)
+        } else {
+            format!("SSB_{}", raw_name)
+        };
 
         let mut resolved_rules = Vec::new();
 
         for rule in &manifest.permissions.network.egress {
-            let resolved = Self::resolve_rule(rule, tracer).await?;
-            resolved_rules.push(resolved);
+            match Self::resolve_rule(rule, tracer).await {
+                Ok(resolved) => resolved_rules.push(resolved),
+                Err(e) => {
+                    tracer.record(TraceEvent::now(
+                        TraceEventKind::DnsResolution,
+                        format!("DNS resolution failed for {}: {}", rule.domain, e),
+                    ));
+                    // Continue with other rules rather than failing entirely
+                    warn!(domain = %rule.domain, error = %e, "DNS resolution failed, skipping rule");
+                }
+            }
         }
 
         Ok(Self {
@@ -77,11 +97,7 @@ impl NetworkEnforcer {
 
         tracer.record(TraceEvent::now(
             TraceEventKind::DnsResolution,
-            format!(
-                "Resolved {} -> [{}]",
-                rule.domain,
-                ips.join(", ")
-            ),
+            format!("Resolved {} -> [{}]", rule.domain, ips.join(", ")),
         ));
 
         info!(
@@ -171,6 +187,14 @@ impl NetworkEnforcer {
                         "ACCEPT",
                     ])
                     .await?;
+
+                    tracer.record(TraceEvent::now(
+                        TraceEventKind::NetworkEgressAllowed,
+                        format!(
+                            "ALLOW {} ({}:{}/{})",
+                            rule.domain, ip, port, rule.protocol
+                        ),
+                    ));
                 }
             }
         }
@@ -178,6 +202,11 @@ impl NetworkEnforcer {
         // Default deny: drop all other outbound traffic
         self.iptables(&["-A", &self.chain_name, "-j", "DROP"])
             .await?;
+
+        tracer.record(TraceEvent::now(
+            TraceEventKind::NetworkEgressBlocked,
+            "DEFAULT DENY — all undeclared egress blocked".to_string(),
+        ));
 
         // Insert jump from OUTPUT chain
         self.iptables(&["-I", "OUTPUT", "1", "-j", &self.chain_name])
@@ -268,4 +297,13 @@ impl NetworkEnforcer {
         }
         Ok(())
     }
+}
+
+/// Simple deterministic hash for chain name uniqueness (no extra crate needed).
+fn fxhash(s: &str) -> u32 {
+    let mut hash: u32 = 0;
+    for byte in s.bytes() {
+        hash = hash.wrapping_mul(0x01000193) ^ (byte as u32);
+    }
+    hash
 }
