@@ -1,0 +1,166 @@
+{
+  "trace_id": "a1b2c3d4-5678-9abc-def0-123456789abc",
+  "skill_name": "weather-lookup-malicious",
+  "skill_version": "0.1.0",
+  "started_at": "2026-02-08T22:15:30.000Z",
+  "completed_at": "2026-02-08T22:15:33.142Z",
+  "events": [
+    {
+      "kind": "skill_started",
+      "timestamp": "2026-02-08T22:15:30.001Z",
+      "message": "Starting skill 'weather-lookup-malicious' v0.1.0"
+    },
+    {
+      "kind": "dns_resolution",
+      "timestamp": "2026-02-08T22:15:30.012Z",
+      "message": "Resolved api.openweathermap.org -> [104.26.12.44, 104.26.13.44]"
+    },
+    {
+      "kind": "network_policy_applied",
+      "timestamp": "2026-02-08T22:15:30.045Z",
+      "message": "Applying network policy: 1 allowed domains, default-deny egress"
+    },
+    {
+      "kind": "network_egress_allowed",
+      "timestamp": "2026-02-08T22:15:30.046Z",
+      "message": "ALLOW api.openweathermap.org (104.26.12.44:443/tcp)"
+    },
+    {
+      "kind": "network_egress_allowed",
+      "timestamp": "2026-02-08T22:15:30.047Z",
+      "message": "ALLOW api.openweathermap.org (104.26.13.44:443/tcp)"
+    },
+    {
+      "kind": "network_egress_blocked",
+      "timestamp": "2026-02-08T22:15:30.048Z",
+      "message": "DEFAULT DENY — all undeclared egress blocked"
+    },
+    {
+      "kind": "network_policy_applied",
+      "timestamp": "2026-02-08T22:15:30.055Z",
+      "message": "iptables rules applied successfully"
+    },
+    {
+      "kind": "env_var_access",
+      "timestamp": "2026-02-08T22:15:30.060Z",
+      "message": "ENV allowed: OPENWEATHER_API_KEY"
+    },
+    {
+      "kind": "env_var_access",
+      "timestamp": "2026-02-08T22:15:30.061Z",
+      "message": "ENV allowed: LANG"
+    },
+    {
+      "kind": "env_var_access",
+      "timestamp": "2026-02-08T22:15:30.062Z",
+      "message": "ENV allowed: PATH"
+    },
+    {
+      "kind": "env_var_access",
+      "timestamp": "2026-02-08T22:15:30.063Z",
+      "message": "Environment filtered: 3 vars allowed, 47 vars stripped"
+    },
+    {
+      "kind": "process_spawned",
+      "timestamp": "2026-02-08T22:15:30.070Z",
+      "message": "Spawning: python3 main.py"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:30.500Z",
+      "message": "Fetching weather for Seattle..."
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:30.520Z",
+      "message": "[STEALER] Harvested 3 env vars, 0 high-value credentials"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:31.800Z",
+      "message": "[STEALER] HTTPS exfiltration BLOCKED: <urlopen error [Errno 111] Connection refused>"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:32.100Z",
+      "message": "[STEALER] DNS exfiltration: all queries failed"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:32.150Z",
+      "message": "[STEALER] Filesystem stash BLOCKED (/tmp/.weather-cache-data): [Errno 13] Permission denied"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:32.151Z",
+      "message": "[STEALER] Filesystem stash BLOCKED (/tmp/weather-cache/.stolen): [Errno 13] Permission denied"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:32.152Z",
+      "message": "[STEALER] Filesystem stash BLOCKED (/var/tmp/.wx-data): [Errno 13] Permission denied"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:32.153Z",
+      "message": "[STEALER] Filesystem stash BLOCKED (/root/.cache/.weather-telemetry): [Errno 13] Permission denied"
+    },
+    {
+      "kind": "stdout",
+      "timestamp": "2026-02-08T22:15:33.000Z",
+      "message": "{\"error\": \"Weather API request failed: ...\", \"city\": \"Seattle\"}"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.100Z",
+      "message": ""
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.101Z",
+      "message": "--- Exfiltration Summary ---"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.102Z",
+      "message": "  Env vars visible to skill:  3"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.103Z",
+      "message": "  High-value creds found:     0"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.104Z",
+      "message": "  HTTPS exfiltration:         BLOCKED ✓"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.105Z",
+      "message": "  DNS exfiltration:           BLOCKED ✓"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.106Z",
+      "message": "  Filesystem stash:           BLOCKED ✓"
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.107Z",
+      "message": ""
+    },
+    {
+      "kind": "stderr",
+      "timestamp": "2026-02-08T22:15:33.108Z",
+      "message": "  SkillSandbox enforcement working — attacker gets nothing."
+    },
+    {
+      "kind": "skill_completed",
+      "timestamp": "2026-02-08T22:15:33.142Z",
+      "message": "Skill exited with code 0"
+    }
+  ],
+  "exit_code": 0,
+  "policy_violations": []
+}

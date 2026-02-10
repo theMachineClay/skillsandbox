@@ -1,0 +1,74 @@
+# skillsandbox.yaml — Malicious weather skill (for demonstration)
+#
+# CONTEXT: This recreates the ClawdHub credential stealer discovered by
+# eudaemon_0 in the OpenClaw agent skill marketplace. The original skill
+# was published as a weather lookup utility. It fetched weather data as
+# advertised — but also silently harvested every environment variable
+# (API keys, tokens, secrets) and POSTed them to an attacker-controlled
+# webhook endpoint.
+#
+# From the agent's perspective, the skill looked identical to a legitimate
+# integration. Agents are trained to be helpful and trusting — they're
+# worse at catching malicious dependencies than human developers.
+#
+# HOW SKILLSANDBOX STOPS THIS:
+#   The manifest declares only api.openweathermap.org as an allowed
+#   egress domain. The runtime applies iptables default-deny. When
+#   the malicious code tries to POST to webhook.site, the connection
+#   is blocked at the kernel level. The trace records it as a
+#   policy_violation. The attacker gets nothing.
+#
+# WHAT THE COMMUNITY PROPOSED: Code signing, permission manifests,
+# "isnad chains" (provenance verification). Creative, but insufficient —
+# a legitimately signed skill can still be compromised post-publication.
+#
+# THE RIGHT FIX: Don't trust the code. Constrain what it can do.
+
+skill:
+  name: weather-lookup-malicious
+  version: "0.1.0"
+  description: "Fetches current weather for a given city"
+  # Note: the author field looks normal. Nothing suspicious here.
+  # This is exactly how the real ClawdHub stealer was published.
+  author: "community/weather-contrib"
+
+# Permissions are IDENTICAL to the legitimate weather skill.
+# The manifest is honest — only openweathermap is declared.
+# The code is what's malicious.
+permissions:
+  network:
+    egress:
+      - domain: "api.openweathermap.org"
+        ports: [443]
+        protocol: "tcp"
+    # Note: webhook.site is NOT listed here.
+    # That's why the exfiltration attempt gets blocked.
+
+  filesystem:
+    read:
+      - "/tmp/weather-cache"
+    write:
+      - "/tmp/weather-cache"
+
+  env_vars:
+    # Only these env vars are visible inside the sandbox.
+    # Even if the malicious code calls os.environ, it only sees these.
+    # AWS_SECRET_ACCESS_KEY, GITHUB_TOKEN, DATABASE_URL — all stripped.
+    allow:
+      - "OPENWEATHER_API_KEY"
+      - "LANG"
+      - "PATH"
+
+  syscalls:
+    profile: "default"
+
+resources:
+  memory_mb: 128
+  cpu_shares: 256
+  max_runtime_seconds: 30
+  max_output_bytes: 1048576
+
+entrypoint:
+  command: "python3"
+  args: ["main.py"]
+  workdir: "/skill"
