@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Capability-based sandbox runtime for AI agent skills"
 license = "Apache-2.0"
-repository = "https://github.com/ivyfei/skillsandbox"
+repository = "https://github.com/theMachineClay/skillsandbox"
 keywords = ["sandbox", "ai-agents", "security", "mcp", "capabilities"]
 categories = ["command-line-utilities", "development-tools"]
 
