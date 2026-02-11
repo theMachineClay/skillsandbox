@@ -31,6 +31,10 @@ pub enum TraceEventKind {
     // Environment
     EnvVarAccess,
 
+    // Syscalls
+    SyscallFiltered,
+    SyscallBlocked,
+
     // Execution
     ProcessSpawned,
     Stdout,

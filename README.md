@@ -300,7 +300,7 @@ examples/skills/
 | Malicious skill demo | ✅ |
 | Docker demo image | ✅ |
 | Filesystem mount isolation | ✅ env-redirect + mount-ns |
-| seccomp-bpf syscall filtering | 🔜 planned |
+| seccomp-bpf syscall filtering | ✅ default/strict/permissive profiles |
 | MCP server interface | 🔜 planned |
 
 ---
