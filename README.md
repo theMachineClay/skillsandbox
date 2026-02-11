@@ -148,14 +148,14 @@ skillsandbox inspect examples/skills/weather/
 
 ```bash
 docker build -t skillsandbox .
-docker run --cap-add=NET_ADMIN skillsandbox
+docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN skillsandbox
 ```
 
-The Docker demo runs four phases: unsandboxed attack → sandboxed attack (blocked) → legitimate skill (works) → manual `curl` proof. `--cap-add=NET_ADMIN` is scoped to the container's network namespace and cannot affect the host.
+The Docker demo runs five phases: unsandboxed attack → sandboxed attack (blocked) → legitimate skill (works) → manual `curl` proof → filesystem isolation proof. `--cap-add=NET_ADMIN` enables iptables, `--cap-add=SYS_ADMIN` enables mount namespace isolation. Both are scoped to the container.
 
 ```bash
 # Interactive — inspect traces, test iptables manually
-docker run --cap-add=NET_ADMIN -it skillsandbox bash
+docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN -it skillsandbox bash
 cat /app/trace-malicious.json | python3 -m json.tool
 ```
 
@@ -299,7 +299,7 @@ examples/skills/
 | Resource limits (timeout) | ✅ |
 | Malicious skill demo | ✅ |
 | Docker demo image | ✅ |
-| Filesystem mount isolation | 🔜 next |
+| Filesystem mount isolation | ✅ env-redirect + mount-ns |
 | seccomp-bpf syscall filtering | 🔜 planned |
 | MCP server interface | 🔜 planned |
 

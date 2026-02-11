@@ -1,4 +1,4 @@
-use crate::enforcer::{build_filtered_env, NetworkEnforcer};
+use crate::enforcer::{build_filtered_env, FilesystemEnforcer, NetworkEnforcer};
 use crate::manifest::SkillManifest;
 use crate::tracer::{TraceEvent, TraceEventKind, Tracer};
 use anyhow::{Context, Result};
@@ -42,7 +42,20 @@ pub async fn run_skill(
     // 4. Build filtered environment
     let env = build_filtered_env(&manifest, &tracer);
 
-    // 5. Spawn the skill process
+    // 5. Set up filesystem isolation
+    let fs_enforcer = FilesystemEnforcer::from_manifest(&manifest, &tracer, dry_run)
+        .context("Failed to set up filesystem enforcer")?;
+    let fs_setup = fs_enforcer
+        .setup(&tracer)
+        .context("Failed to set up filesystem isolation")?;
+
+    // Merge env overrides (HOME, TMPDIR, XDG_*) into filtered env
+    let mut env = env;
+    for (k, v) in &fs_setup.env_overrides {
+        env.insert(k.clone(), v.clone());
+    }
+
+    // 6. Spawn the skill process
     let mut cmd_args = manifest.entrypoint.args.clone();
     cmd_args.extend(extra_args.iter().cloned());
 
@@ -55,22 +68,53 @@ pub async fn run_skill(
         ),
     ));
 
-    let mut child = Command::new(&manifest.entrypoint.command)
-        .args(&cmd_args)
-        .current_dir(skill_dir)
-        .env_clear()
-        .envs(&env)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .with_context(|| {
-            format!(
-                "Failed to spawn skill process: {} {:?}",
-                manifest.entrypoint.command, cmd_args
-            )
-        })?;
+    let mut child = if let Some(ref prefix) = fs_setup.mount_prefix {
+        // Linux with root: wrap command in unshare -m with bind mounts
+        // prefix = ["unshare", "-m", "--", "sh", "-c", "mount_cmds"]
+        // We append "&& exec <real_command> <args>" to the shell script
+        let real_cmd = format!(
+            "{} && exec {} {}",
+            prefix.last().unwrap_or(&String::new()),
+            shell_escape(&manifest.entrypoint.command),
+            cmd_args.iter().map(|a| shell_escape(a)).collect::<Vec<_>>().join(" ")
+        );
 
-    // 6. Capture stdout/stderr into trace
+        let mut full_prefix = prefix[..prefix.len() - 1].to_vec();
+        full_prefix.push(real_cmd);
+
+        Command::new(&full_prefix[0])
+            .args(&full_prefix[1..])
+            .current_dir(skill_dir)
+            .env_clear()
+            .envs(&env)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .with_context(|| {
+                format!(
+                    "Failed to spawn skill process with mount namespace: {:?}",
+                    full_prefix
+                )
+            })?
+    } else {
+        // No mount namespace: env-based isolation only
+        Command::new(&manifest.entrypoint.command)
+            .args(&cmd_args)
+            .current_dir(skill_dir)
+            .env_clear()
+            .envs(&env)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .with_context(|| {
+                format!(
+                    "Failed to spawn skill process: {} {:?}",
+                    manifest.entrypoint.command, cmd_args
+                )
+            })?
+    };
+
+    // 7. Capture stdout/stderr into trace
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
 
@@ -106,7 +150,7 @@ pub async fn run_skill(
         collected
     });
 
-    // 7. Wait with timeout
+    // 8. Wait with timeout
     let max_duration = Duration::from_secs(manifest.resources.max_runtime_seconds);
     let exit_code = match timeout(max_duration, child.wait()).await {
         Ok(Ok(status)) => status.code().unwrap_or(-1),
@@ -136,15 +180,18 @@ pub async fn run_skill(
     let stdout_text = stdout_handle.await.unwrap_or_default();
     let stderr_text = stderr_handle.await.unwrap_or_default();
 
-    // 8. Complete trace
+    // 9. Complete trace
     tracer.complete(exit_code);
 
-    // 9. Teardown network policy
+    // 10. Teardown network policy
     if let Err(e) = net_enforcer.teardown(&tracer).await {
         error!("Failed to teardown network policy: {}", e);
     }
 
-    // 10. Output results
+    // 11. Audit filesystem — check what the skill wrote
+    fs_enforcer.audit_scratch(&tracer);
+
+    // 12. Output results
     println!("{}", tracer.summary());
 
     if !stdout_text.is_empty() {
@@ -154,7 +201,7 @@ pub async fn run_skill(
         eprintln!("\n--- stderr ---\n{}", stderr_text.trim_end());
     }
 
-    // 11. Write trace
+    // 13. Write trace
     if let Some(path) = trace_output {
         tracer
             .write_to_file(path)
@@ -168,4 +215,13 @@ pub async fn run_skill(
     }
 
     Ok(exit_code)
+}
+
+/// Escape a string for safe use in a shell command.
+fn shell_escape(s: &str) -> String {
+    if s.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == '/') {
+        s.to_string()
+    } else {
+        format!("'{}'", s.replace('\'', "'\\''"))
+    }
 }

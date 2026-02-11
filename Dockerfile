@@ -9,21 +9,27 @@
 #   docker build -t skillsandbox .
 #
 # Run the demo:
-#   docker run --cap-add=NET_ADMIN skillsandbox
+#   docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN skillsandbox
 #
 # Interactive shell:
-#   docker run --cap-add=NET_ADMIN -it skillsandbox bash
+#   docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN -it skillsandbox bash
 #
 # Why --cap-add=NET_ADMIN:
 #   iptables requires CAP_NET_ADMIN to create chains and rules.
 #   This capability is scoped to the container's network namespace —
 #   it cannot affect the host's iptables rules.
+#
+# Why --cap-add=SYS_ADMIN:
+#   Filesystem isolation uses `unshare -m` to create a mount namespace,
+#   then bind-mounts a scratch dir over /tmp, /var/tmp, etc.
+#   CAP_SYS_ADMIN is required for mount namespace operations.
+#   This is scoped to the container — it cannot affect host mounts.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
 # Stage 1: Build the Rust binary
 # ---------------------------------------------------------------------------
-FROM rust:1.82-bookworm AS builder
+FROM rust:1.85-bookworm AS builder
 
 WORKDIR /build
 
@@ -44,14 +50,17 @@ RUN mkdir -p src && \
           src/runner.rs && \
     cargo build --release 2>/dev/null || true
 
-# Now copy real source and rebuild (only changed files recompile)
+# Now copy real source and rebuild
 COPY src/ src/
 COPY examples/ examples/
 
-# Touch all source files so cargo sees them as newer than the dummy
-RUN find src -name '*.rs' -exec touch {} +
-
-RUN cargo build --release
+# Remove the cached build of the dummy crate so cargo does a clean build
+# of skillsandbox (dependencies remain cached — that's the win)
+RUN rm -rf target/release/.fingerprint/skillsandbox-* \
+           target/release/deps/skillsandbox-* \
+           target/release/deps/libskillsandbox-* \
+           target/release/incremental/skillsandbox-* && \
+    cargo build --release
 
 # Verify the binary exists and runs
 RUN ./target/release/skillsandbox --version
@@ -77,6 +86,7 @@ RUN apt-get update && \
         dnsutils \
         curl \
         procps \
+        util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary
