@@ -6,8 +6,9 @@
 
 *Skills declare what they need. The runtime enforces it. Every execution produces a structured audit trail.*
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.82+-orange.svg)](https://www.rust-lang.org/)
+[![CI](https://github.com/theMachineClay/skillsandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/theMachineClay/skillsandbox/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.88+-orange.svg)](https://www.rust-lang.org/)
 [![Status](https://img.shields.io/badge/status-MVP-green.svg)]()
 
 </div>
@@ -122,6 +123,32 @@ skillsandbox run --dry-run examples/skills/malicious-weather/
 | **Filesystem stash** | ⚠️ SUCCESS | ✅ **BLOCKED** |
 
 The skill outputs valid weather JSON in both cases. The agent sees no difference. The exfiltration channels are dead.
+
+---
+
+## Installation
+
+```bash
+# Clone and build
+git clone https://github.com/theMachineClay/skillsandbox.git
+cd skillsandbox
+cargo build --release
+
+# Binary is at target/release/skillsandbox
+# Optionally copy to PATH:
+cp target/release/skillsandbox ~/.local/bin/
+```
+
+### Platform Support
+
+| Platform | Enforcement | Notes |
+|:---------|:-----------|:------|
+| **Linux** | Full | iptables, seccomp-bpf, mount namespaces, env filtering |
+| **Docker** | Full | Recommended for quick demo — `docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN` |
+| **macOS** | Dry-run only | Env filtering works; network/filesystem/seccomp require Linux kernel features |
+| **Windows (WSL2)** | Full | WSL2 runs a real Linux kernel — all enforcement layers work |
+
+> **Recommended**: Use Docker or a Linux machine for the full demo. On macOS, `--dry-run` mode shows the enforcement plan without applying kernel-level rules.
 
 ---
 
@@ -333,6 +360,14 @@ examples/skills/
 | seccomp-bpf syscall filtering | ✅ default/strict/permissive profiles |
 | MCP server interface | ✅ implemented |
 
+### Roadmap
+
+- **cgroups memory/CPU limits** — enforce `resources.memory_mb` and `resources.max_cpu_percent` from the manifest via cgroup v2
+- **Process-level isolation** — PID namespace so skills can't see or signal other processes
+- **OCI image support** — run skills packaged as container images, not just local directories
+- **Audit log aggregation** — stream execution traces to an external collector (OpenTelemetry)
+- **Wasm runtime option** — lightweight alternative to process-based execution for simple skills
+
 ---
 
 ## Context
@@ -347,6 +382,6 @@ SkillSandbox is a prototype of the enforcement layer these ecosystems need, desi
 
 **Don't trust the code. Constrain what it can do.**
 
-Apache-2.0
+MIT
 
 </div>
