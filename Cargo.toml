@@ -41,6 +41,9 @@ tempfile = "3"
 thiserror = "2"
 anyhow = "1"
 
+# MCP server (Model Context Protocol)
+rmcp = { version = "0.13", features = ["server", "transport-io"], optional = true }
+
 # Network egress enforcement (iptables wrapper)
 # We shell out to `iptables` for the MVP; no extra crate needed.
 
@@ -55,3 +58,7 @@ seccompiler = "0.4"
 [dev-dependencies]
 assert_cmd = "2"
 predicates = "3"
+
+[features]
+default = ["mcp"]
+mcp = ["dep:rmcp"]

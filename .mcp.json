@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "skillsandbox": {
+      "command": "skillsandbox",
+      "args": ["serve"],
+      "env": {}
+    }
+  }
+}

@@ -6,15 +6,31 @@ use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .with_target(false)
-        .init();
-
     let cli = Cli::parse();
+
+    // For MCP serve mode, we need tracing on stderr only (stdout is for JSON-RPC)
+    #[cfg(feature = "mcp")]
+    let is_serve = matches!(cli.command, Commands::Serve);
+    #[cfg(not(feature = "mcp"))]
+    let is_serve = false;
+
+    if is_serve {
+        // MCP mode: log to stderr at warn level to avoid polluting JSON-RPC on stdout
+        tracing_subscriber::fmt()
+            .with_env_filter(
+                EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")),
+            )
+            .with_target(false)
+            .with_writer(std::io::stderr)
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(
+                EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+            )
+            .with_target(false)
+            .init();
+    }
 
     match cli.command {
         Commands::Run {
@@ -79,6 +95,19 @@ async fn main() -> Result<()> {
             let manifest = SkillManifest::from_file(&manifest_path)?;
             let json = serde_json::to_string_pretty(&manifest)?;
             println!("{}", json);
+        }
+
+        #[cfg(feature = "mcp")]
+        Commands::Serve => {
+            use rmcp::{transport::stdio, ServiceExt};
+            use skillsandbox::mcp::SkillSandboxMcp;
+
+            eprintln!("SkillSandbox MCP server starting on stdio...");
+            let service = SkillSandboxMcp::new();
+            let server = service.serve(stdio()).await?;
+            eprintln!("SkillSandbox MCP server ready — waiting for requests");
+            server.waiting().await?;
+            eprintln!("SkillSandbox MCP server shutting down");
         }
     }
 

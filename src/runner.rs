@@ -2,6 +2,7 @@ use crate::enforcer::{build_filtered_env, FilesystemEnforcer, NetworkEnforcer, S
 use crate::manifest::SkillManifest;
 use crate::tracer::{TraceEvent, TraceEventKind, Tracer};
 use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
@@ -9,13 +10,49 @@ use tokio::process::Command;
 use tokio::time::{timeout, Duration};
 use tracing::{error, info};
 
+/// Structured result from a sandboxed skill execution.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillRunResult {
+    pub skill_name: String,
+    pub skill_version: String,
+    pub exit_code: i32,
+    pub stdout: String,
+    pub stderr: String,
+    pub trace_json: String,
+    pub summary: String,
+    pub violations: usize,
+    pub events: usize,
+}
+
 /// Execute a skill inside the sandbox with all enforcement layers.
+/// Returns exit code (for CLI use). Prints stdout/stderr/summary.
 pub async fn run_skill(
     skill_dir: &Path,
     dry_run: bool,
     extra_args: &[String],
     trace_output: Option<&Path>,
 ) -> Result<i32> {
+    let result = run_skill_inner(skill_dir, dry_run, extra_args, trace_output).await?;
+
+    // Print results (CLI mode)
+    println!("{}", result.summary);
+    if !result.stdout.is_empty() {
+        println!("\n--- stdout ---\n{}", result.stdout.trim_end());
+    }
+    if !result.stderr.is_empty() {
+        eprintln!("\n--- stderr ---\n{}", result.stderr.trim_end());
+    }
+
+    Ok(result.exit_code)
+}
+
+/// Execute a skill and return structured results (for MCP / programmatic use).
+pub async fn run_skill_inner(
+    skill_dir: &Path,
+    dry_run: bool,
+    extra_args: &[String],
+    trace_output: Option<&Path>,
+) -> Result<SkillRunResult> {
     // 1. Load manifest
     let manifest_path = skill_dir.join("skillsandbox.yaml");
     let manifest = SkillManifest::from_file(&manifest_path)
@@ -127,6 +164,7 @@ pub async fn run_skill(
             // applies only to the skill process, not the sandbox runtime.
             #[cfg(unix)]
             {
+                #[allow(unused_imports)]
                 use std::os::unix::process::CommandExt;
                 unsafe {
                     cmd.pre_exec(move || {
@@ -221,15 +259,12 @@ pub async fn run_skill(
     // 12. Audit filesystem — check what the skill wrote
     fs_enforcer.audit_scratch(&tracer);
 
-    // 13. Output results
-    println!("{}", tracer.summary());
-
-    if !stdout_text.is_empty() {
-        println!("\n--- stdout ---\n{}", stdout_text.trim_end());
-    }
-    if !stderr_text.is_empty() {
-        eprintln!("\n--- stderr ---\n{}", stderr_text.trim_end());
-    }
+    // 13. Build result
+    let summary = tracer.summary();
+    let trace_snapshot = tracer.snapshot();
+    let trace_json = tracer.to_json();
+    let violations = trace_snapshot.policy_violations.len();
+    let events = trace_snapshot.events.len();
 
     // 14. Write trace
     if let Some(path) = trace_output {
@@ -244,7 +279,17 @@ pub async fn run_skill(
         info!(path = ?default_path, "Execution trace written (default)");
     }
 
-    Ok(exit_code)
+    Ok(SkillRunResult {
+        skill_name: manifest.skill.name.clone(),
+        skill_version: manifest.skill.version.clone(),
+        exit_code,
+        stdout: stdout_text,
+        stderr: stderr_text,
+        trace_json,
+        summary,
+        violations,
+        events,
+    })
 }
 
 /// Escape a string for safe use in a shell command.

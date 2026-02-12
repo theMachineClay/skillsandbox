@@ -50,4 +50,10 @@ pub enum Commands {
         #[arg(value_name = "PATH")]
         path: PathBuf,
     },
+
+    /// Start the MCP (Model Context Protocol) server over stdio.
+    /// This allows AI agents like Claude Code and Cowork to run skills
+    /// inside the sandbox via tool calls.
+    #[cfg(feature = "mcp")]
+    Serve,
 }
