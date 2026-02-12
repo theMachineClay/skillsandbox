@@ -91,9 +91,9 @@ python3 examples/skills/malicious-weather/main.py
 
 ```
 [STEALER] Harvested 69 env vars, 6 high-value credentials
-[STEALER] Exfiltration successful: 200
+[STEALER] Exfiltration successful (server returned 404 but data was sent)
 
-  ⚠️  CREDENTIALS EXFILTRATED — sandbox was not enforcing!
+  ⚠️  CREDENTIALS AT RISK — sandbox was not enforcing!
 ```
 
 ### 3. Run **with** SkillSandbox
@@ -118,7 +118,7 @@ skillsandbox run --dry-run examples/skills/malicious-weather/
 | **Env vars visible** | 69 | 4 |
 | **High-value creds** | 6 | 0 |
 | **HTTPS exfil** → `webhook.site` | ⚠️ SUCCESS | ✅ **BLOCKED** |
-| **DNS exfil** | ⚠️ SUCCESS | ✅ **BLOCKED** |
+| **DNS exfil** | N/A (demo) | ✅ **BLOCKED** |
 | **Filesystem stash** | ⚠️ SUCCESS | ✅ **BLOCKED** |
 
 The skill outputs valid weather JSON in both cases. The agent sees no difference. The exfiltration channels are dead.
@@ -157,6 +157,32 @@ The Docker demo runs five phases: unsandboxed attack → sandboxed attack (block
 # Interactive — inspect traces, test iptables manually
 docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN -it skillsandbox bash
 cat /app/trace-malicious.json | python3 -m json.tool
+```
+
+### MCP Server (Claude Code / Cowork integration)
+
+SkillSandbox exposes itself as an MCP server, so any MCP-compatible agent can sandbox skill execution natively.
+
+```bash
+# Start the MCP server on stdio
+skillsandbox serve
+```
+
+**Tools exposed:**
+- `run_skill` — Execute a skill with capability-based enforcement, returns stdout/stderr + execution trace
+- `validate_skill` — Parse and validate a `skillsandbox.yaml` manifest without running anything
+- `list_skills` — Scan a directory for skills (subdirs containing `skillsandbox.yaml`)
+
+**Claude Code integration** — add to `.mcp.json`:
+```json
+{
+  "mcpServers": {
+    "skillsandbox": {
+      "command": "skillsandbox",
+      "args": ["serve"]
+    }
+  }
+}
 ```
 
 ---
@@ -269,11 +295,15 @@ src/
 │   └── parser.rs       #   SkillManifest, Permissions, EgressRule
 ├── enforcer/           # Runtime enforcement
 │   ├── network.rs      #   iptables default-deny + allowlist
-│   └── env_filter.rs   #   Strip undeclared env vars
+│   ├── env_filter.rs   #   Strip undeclared env vars
+│   ├── filesystem.rs   #   Mount-namespace isolation + env-redirect
+│   └── seccomp.rs      #   seccomp-bpf syscall filtering (Linux)
+├── mcp/                # Model Context Protocol server
+│   └── server.rs       #   run_skill · validate_skill · list_skills
 ├── tracer/             # Structured audit trail
 │   └── trace.rs        #   Thread-safe event collector → trace.json
 ├── cli/
-│   └── commands.rs     #   run · validate · inspect
+│   └── commands.rs     #   run · validate · inspect · serve
 ├── runner.rs           # Orchestrator: load → enforce → spawn → trace
 ├── lib.rs
 └── main.rs
@@ -301,7 +331,7 @@ examples/skills/
 | Docker demo image | ✅ |
 | Filesystem mount isolation | ✅ env-redirect + mount-ns |
 | seccomp-bpf syscall filtering | ✅ default/strict/permissive profiles |
-| MCP server interface | 🔜 planned |
+| MCP server interface | ✅ implemented |
 
 ---
 

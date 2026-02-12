@@ -330,7 +330,7 @@ echo "  ├───────────────────────
 echo "  │ Env vars visible        │ ~$(env | wc -l) vars          │ 3 vars            │"
 echo "  │ High-value creds        │ 18 found          │ 0 found           │"
 echo "  │ HTTPS exfil (webhook)   │ SUCCESS ⚠️         │ BLOCKED ✓         │"
-echo "  │ DNS exfil               │ SUCCESS ⚠️         │ BLOCKED ✓         │"
+echo "  │ DNS exfil               │ N/A (demo)        │ BLOCKED ✓         │"
 echo "  │ Filesystem stash        │ SUCCESS ⚠️         │ $FS_STATUS  │"
 echo "  │ Syscall filter          │ NONE ⚠️            │ $SECCOMP_STATUS   │"
 echo "  └─────────────────────────┴───────────────────┴───────────────────┘"
