@@ -174,11 +174,11 @@ impl SkillManifest {
     /// Load and validate a manifest from a YAML file path.
     pub fn from_file(path: impl AsRef<Path>) -> Result<Self, ManifestError> {
         let content = std::fs::read_to_string(path)?;
-        Self::from_str(&content)
+        Self::parse_yaml(&content)
     }
 
     /// Parse and validate from a YAML string.
-    pub fn from_str(yaml: &str) -> Result<Self, ManifestError> {
+    pub fn parse_yaml(yaml: &str) -> Result<Self, ManifestError> {
         let manifest: Self = serde_yaml::from_str(yaml)?;
         manifest.validate()?;
         Ok(manifest)
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn parse_weather_manifest() {
         let yaml = include_str!("../../examples/skills/weather/skillsandbox.yaml");
-        let manifest = SkillManifest::from_str(yaml).expect("should parse");
+        let manifest = SkillManifest::parse_yaml(yaml).expect("should parse");
         assert_eq!(manifest.skill.name, "weather-lookup");
         assert_eq!(manifest.permissions.network.egress.len(), 1);
         assert_eq!(
@@ -272,7 +272,7 @@ permissions:
 entrypoint:
   command: "echo"
 "#;
-        let err = SkillManifest::from_str(yaml).unwrap_err();
+        let err = SkillManifest::parse_yaml(yaml).unwrap_err();
         assert!(err.to_string().contains("name must not be empty"));
     }
 }

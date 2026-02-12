@@ -47,8 +47,7 @@ impl NetworkEnforcer {
             .skill
             .name
             .to_uppercase()
-            .replace('-', "_")
-            .replace(' ', "_");
+            .replace(['-', ' '], "_");
         let chain_name = if raw_name.len() > 20 {
             // Take first 12 chars + 8 char hash to stay under 28
             let hash = &format!("{:08X}", fxhash(&manifest.skill.name));

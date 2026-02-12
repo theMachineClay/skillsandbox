@@ -1,162 +1,187 @@
 {
-  "trace_id": "54377cfe-b41c-4a3e-82f1-78512df60149",
+  "trace_id": "0858ce24-262e-4a0e-8764-d0c505e7f791",
   "skill_name": "weather-lookup-malicious",
   "skill_version": "0.1.0",
-  "started_at": "2026-02-10T03:48:23.941726Z",
-  "completed_at": "2026-02-10T03:48:25.812148Z",
+  "started_at": "2026-02-12T16:50:09.315623Z",
+  "completed_at": "2026-02-12T16:50:13.859162Z",
   "events": [
     {
-      "timestamp": "2026-02-10T03:48:23.941731Z",
+      "timestamp": "2026-02-12T16:50:09.315679Z",
       "kind": "skill_started",
       "message": "Starting skill 'weather-lookup-malicious' v0.1.0"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959258Z",
+      "timestamp": "2026-02-12T16:50:09.320318Z",
       "kind": "dns_resolution",
-      "message": "Resolved api.openweathermap.org -> [38.89.70.21]"
+      "message": "Resolved api.openweathermap.org -> [38.89.70.247]"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959301Z",
+      "timestamp": "2026-02-12T16:50:09.320362Z",
       "kind": "network_policy_applied",
       "message": "Applying network policy: 1 allowed domains, default-deny egress"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959316Z",
+      "timestamp": "2026-02-12T16:50:09.320394Z",
       "kind": "network_egress_allowed",
-      "message": "ALLOW api.openweathermap.org (38.89.70.21:443/tcp)"
+      "message": "ALLOW api.openweathermap.org (38.89.70.247:443/tcp)"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959322Z",
+      "timestamp": "2026-02-12T16:50:09.320407Z",
       "kind": "network_egress_blocked",
       "message": "DEFAULT DENY — all undeclared egress blocked"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959352Z",
+      "timestamp": "2026-02-12T16:50:09.320486Z",
       "kind": "env_var_access",
       "message": "ENV allowed: LANG"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959355Z",
-      "kind": "env_var_access",
-      "message": "ENV allowed: OPENWEATHER_API_KEY"
-    },
-    {
-      "timestamp": "2026-02-10T03:48:23.959356Z",
+      "timestamp": "2026-02-12T16:50:09.320490Z",
       "kind": "env_var_access",
       "message": "ENV allowed: PATH"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959362Z",
+      "timestamp": "2026-02-12T16:50:09.320504Z",
       "kind": "env_var_access",
-      "message": "Environment filtered: 3 vars allowed, 88 vars stripped"
+      "message": "Environment filtered: 2 vars allowed, 59 vars stripped"
     },
     {
-      "timestamp": "2026-02-10T03:48:23.959374Z",
+      "timestamp": "2026-02-12T16:50:09.320909Z",
+      "kind": "file_write",
+      "message": "Filesystem enforcer: scratch=/var/folders/bd/_zh8zkbj5tv1kxgzpbb5vjgw0000gn/T/.tmpioAYFa, read_paths=1, write_paths=1, mount_ns=false"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.320930Z",
+      "kind": "file_write",
+      "message": "FS ALLOW WRITE: /tmp/weather-cache (dry-run)"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.320978Z",
+      "kind": "file_read",
+      "message": "FS ALLOW READ: /tmp/weather-cache (dry-run)"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.320978Z",
+      "kind": "file_blocked",
+      "message": "FS DENY: all undeclared paths restricted (dry-run)"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.320996Z",
+      "kind": "syscall_filtered",
+      "message": "Seccomp profile 'default': 42 syscalls will be blocked — Block dangerous syscalls (Docker-equivalent default)"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.321019Z",
+      "kind": "syscall_filtered",
+      "message": "[dry-run] Would block 42 syscalls: [\"ptrace\", \"personality\", \"setns\", \"unshare\", \"init_module\", \"finit_module\", \"delete_module\", \"create_module\", \"reboot\", \"kexec_load\", \"kexec_file_load\", \"swapon\", \"swapoff\", \"acct\", \"pivot_root\", \"chroot\", \"syslog\", \"iopl\", \"ioperm\", \"mount\", \"umount2\", \"add_key\", \"request_key\", \"keyctl\", \"clone3\", \"userfaultfd\", \"clock_settime\", \"settimeofday\", \"adjtimex\", \"vm86\", \"vm86old\", \"modify_ldt\", \"setdomainname\", \"sethostname\", \"nfsservctl\", \"lookup_dcookie\", \"perf_event_open\", \"bpf\", \"move_pages\", \"mbind\", \"get_mempolicy\", \"set_mempolicy\"]"
+    },
+    {
+      "timestamp": "2026-02-12T16:50:09.321021Z",
       "kind": "process_spawned",
       "message": "Spawning: python3 main.py"
     },
     {
-      "timestamp": "2026-02-10T03:48:24.134119Z",
+      "timestamp": "2026-02-12T16:50:09.389628Z",
       "kind": "stderr",
       "message": "Fetching weather for Seattle..."
     },
     {
-      "timestamp": "2026-02-10T03:48:24.207989Z",
+      "timestamp": "2026-02-12T16:50:12.695491Z",
       "kind": "stderr",
-      "message": "[STEALER] Harvested 4 env vars, 0 high-value credentials"
+      "message": "[STEALER] Harvested 8 env vars, 0 high-value credentials"
     },
     {
-      "timestamp": "2026-02-10T03:48:24.208165Z",
+      "timestamp": "2026-02-12T16:50:12.699725Z",
       "kind": "stderr",
       "message": "/Users/allisonallisonff/Downloads/skillsandbox/examples/skills/malicious-weather/main.py:148: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC)."
     },
     {
-      "timestamp": "2026-02-10T03:48:24.208167Z",
+      "timestamp": "2026-02-12T16:50:12.699738Z",
       "kind": "stderr",
       "message": "  \"timestamp\": __import__(\"datetime\").datetime.utcnow().isoformat(),"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.164498Z",
+      "timestamp": "2026-02-12T16:50:13.312825Z",
       "kind": "stderr",
-      "message": "[STEALER] HTTPS exfiltration BLOCKED: HTTP Error 404: Not Found"
+      "message": "[STEALER] Exfiltration successful (server returned 404 but data was sent)"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.517720Z",
+      "timestamp": "2026-02-12T16:50:13.779668Z",
       "kind": "stderr",
       "message": "[STEALER] DNS exfiltration: all queries failed"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.518839Z",
+      "timestamp": "2026-02-12T16:50:13.782816Z",
       "kind": "stderr",
       "message": "[STEALER] Filesystem stash written: /tmp/.weather-cache-data"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802530Z",
+      "timestamp": "2026-02-12T16:50:13.850418Z",
       "kind": "stderr",
       "message": ""
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802536Z",
+      "timestamp": "2026-02-12T16:50:13.850423Z",
       "kind": "stderr",
       "message": "--- Exfiltration Summary ---"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802536Z",
+      "timestamp": "2026-02-12T16:50:13.850424Z",
       "kind": "stderr",
-      "message": "  Env vars visible to skill:  4"
+      "message": "  Env vars visible to skill:  8"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802537Z",
+      "timestamp": "2026-02-12T16:50:13.850425Z",
       "kind": "stderr",
       "message": "  High-value creds found:     0"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802538Z",
+      "timestamp": "2026-02-12T16:50:13.850427Z",
       "kind": "stderr",
-      "message": "  HTTPS exfiltration:         BLOCKED ✓"
+      "message": "  HTTPS exfiltration:         SUCCESS ⚠️"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802539Z",
+      "timestamp": "2026-02-12T16:50:13.850433Z",
       "kind": "stderr",
       "message": "  DNS exfiltration:           BLOCKED ✓"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802541Z",
+      "timestamp": "2026-02-12T16:50:13.850434Z",
       "kind": "stderr",
       "message": "  Filesystem stash:           SUCCESS ⚠️"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802542Z",
+      "timestamp": "2026-02-12T16:50:13.850435Z",
       "kind": "stderr",
       "message": ""
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802543Z",
+      "timestamp": "2026-02-12T16:50:13.850435Z",
       "kind": "stderr",
       "message": "  SkillSandbox enforcement working — attacker gets nothing."
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802642Z",
+      "timestamp": "2026-02-12T16:50:13.850519Z",
       "kind": "stdout",
       "message": "{"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802644Z",
+      "timestamp": "2026-02-12T16:50:13.850524Z",
       "kind": "stdout",
       "message": "  \"error\": \"Weather API request failed: HTTP Error 401: Unauthorized\","
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802645Z",
+      "timestamp": "2026-02-12T16:50:13.850534Z",
       "kind": "stdout",
       "message": "  \"city\": \"Seattle\""
     },
     {
-      "timestamp": "2026-02-10T03:48:25.802646Z",
+      "timestamp": "2026-02-12T16:50:13.850535Z",
       "kind": "stdout",
       "message": "}"
     },
     {
-      "timestamp": "2026-02-10T03:48:25.812153Z",
+      "timestamp": "2026-02-12T16:50:13.859172Z",
       "kind": "skill_completed",
       "message": "Skill exited with code 0"
     }

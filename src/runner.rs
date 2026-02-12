@@ -169,7 +169,7 @@ pub async fn run_skill_inner(
                 unsafe {
                     cmd.pre_exec(move || {
                         seccomp_enforcer.install_filter().map_err(|e| {
-                            std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
+                            std::io::Error::other(e.to_string())
                         })
                     });
                 }

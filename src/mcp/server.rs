@@ -52,6 +52,12 @@ pub struct ListSkillsRequest {
 #[derive(Debug, Clone)]
 pub struct SkillSandboxMcp;
 
+impl Default for SkillSandboxMcp {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SkillSandboxMcp {
     pub fn new() -> Self {
         Self
@@ -307,12 +313,12 @@ impl ServerHandler for SkillSandboxMcp {
         }))
     }
 
-    fn call_tool(
+    async fn call_tool(
         &self,
         request: CallToolRequestParam,
         _context: RequestContext<RoleServer>,
-    ) -> impl Future<Output = Result<CallToolResult, McpError>> + Send + '_ {
-        async move {
+    ) -> Result<CallToolResult, McpError> {
+        
             let args = request.arguments.unwrap_or_default();
 
             let text = match request.name.as_ref() {
@@ -359,6 +365,6 @@ impl ServerHandler for SkillSandboxMcp {
             };
 
             Ok(CallToolResult::success(vec![Content::text(text)]))
-        }
+        
     }
 }
