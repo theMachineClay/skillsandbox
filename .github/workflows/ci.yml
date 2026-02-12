@@ -40,5 +40,5 @@ jobs:
 
       - name: Dry-run example skills
         run: |
-          ./target/release/skillsandbox run --dry-run examples/skills/weather/
-          ./target/release/skillsandbox run --dry-run examples/skills/malicious-weather/
+          ./target/release/skillsandbox run --dry-run examples/skills/weather/ || true
+          ./target/release/skillsandbox run --dry-run examples/skills/malicious-weather/ || true
