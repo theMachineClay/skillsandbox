@@ -134,6 +134,9 @@ git clone https://github.com/theMachineClay/skillsandbox.git
 cd skillsandbox
 cargo build --release
 
+# With OpenTelemetry support (optional)
+cargo build --release --features otel
+
 # Binary is at target/release/skillsandbox
 # Optionally copy to PATH:
 cp target/release/skillsandbox ~/.local/bin/
@@ -163,6 +166,9 @@ skillsandbox validate examples/skills/weather/
 
 # Dry-run — show what would be enforced, no root needed
 skillsandbox run --dry-run examples/skills/weather/
+
+# Real-time enforcement streaming — see every policy decision as it happens
+skillsandbox run --watch --dry-run examples/skills/malicious-weather/
 
 # Real enforcement — requires root for iptables
 sudo skillsandbox run examples/skills/weather/
@@ -292,9 +298,58 @@ flowchart TD
     { "kind": "stderr",                 "message": "[STEALER] HTTPS exfiltration BLOCKED" },
     { "kind": "skill_completed",        "message": "Skill exited with code 0" }
   ],
-  "policy_violations": []
+  "policy_violations": [],
+  "violation_summary": {
+    "total_enforcements": 3,
+    "classifications": [
+      { "class": "credential_harvesting",   "severity": "critical", "mitre_tactic": "credential-access" },
+      { "class": "credential_exfiltration", "severity": "critical", "mitre_tactic": "exfiltration" },
+      { "class": "supply_chain_attack",     "severity": "critical", "mitre_tactic": "exfiltration" }
+    ],
+    "all_prevented": true,
+    "max_severity": "critical"
+  }
 }
 ```
+
+---
+
+## Observability
+
+SkillSandbox produces enforcement intelligence, not just logs. Three layers of visibility:
+
+### `--watch` — Real-time trace streaming
+
+```bash
+skillsandbox run --watch --dry-run examples/skills/malicious-weather/
+```
+
+```
+[23:33:43.677] 🔒 POLICY   DEFAULT DENY — all undeclared egress blocked [CREDENTIAL_EXFILTRATION]
+[23:33:43.677] 🔒 POLICY   Environment filtered: 2 vars allowed, 59 vars stripped [CREDENTIAL_HARVESTING]
+[23:33:43.679] 🔒 FS       FS DENY: all undeclared paths restricted [UNAUTHORIZED_FILE_ACCESS]
+[23:33:45.288] ✅ COMPLETE  exit_code=0  duration=1663ms  classified=[supply_chain_attack] max_severity=critical
+```
+
+Every enforcement event streams to the terminal as it happens — not post-hoc.
+
+### `--otel` — OpenTelemetry span export
+
+```bash
+# Start Jaeger
+docker run -d -p 16686:16686 -p 4318:4318 jaegertracing/all-in-one
+
+# Run with OTel export (requires building with --features otel)
+cargo run --features otel -- run --watch --otel --dry-run examples/skills/malicious-weather/
+
+# View enforcement traces at http://localhost:16686
+```
+
+Enforcement events become OpenTelemetry spans under the `sandbox.*` namespace — the first sandbox to emit enforcement traces into the industry-standard observability pipeline. Works with Jaeger, Grafana Tempo, Datadog, or any OTLP-compatible backend.
+
+### Threat classification
+
+Every enforcement event is automatically classified into a threat taxonomy with MITRE ATT&CK tactic mapping. The ClawdHub credential stealer triggers the `supply_chain_attack` pattern automatically — credential harvesting (env vars stripped) combined with exfiltration attempt (network egress blocked).
 
 ---
 
@@ -327,8 +382,10 @@ src/
 │   └── seccomp.rs      #   seccomp-bpf syscall filtering (Linux)
 ├── mcp/                # Model Context Protocol server
 │   └── server.rs       #   run_skill · validate_skill · list_skills
-├── tracer/             # Structured audit trail
-│   └── trace.rs        #   Thread-safe event collector → trace.json
+├── tracer/             # Structured audit trail + observability
+│   ├── trace.rs        #   Thread-safe event collector → trace.json
+│   ├── classify.rs     #   Threat classification + MITRE tactic mapping
+│   └── otel.rs         #   OpenTelemetry span export via OTLP (optional)
 ├── cli/
 │   └── commands.rs     #   run · validate · inspect · serve
 ├── runner.rs           # Orchestrator: load → enforce → spawn → trace
@@ -359,13 +416,16 @@ examples/skills/
 | Filesystem mount isolation | ✅ env-redirect + mount-ns |
 | seccomp-bpf syscall filtering | ✅ default/strict/permissive profiles |
 | MCP server interface | ✅ implemented |
+| Real-time trace streaming (`--watch`) | ✅ live enforcement events to terminal |
+| OpenTelemetry span export (`--otel`) | ✅ OTLP HTTP to Jaeger/Tempo/Datadog |
+| Threat classification + MITRE mapping | ✅ auto-classifies enforcement events |
 
 ### Roadmap
 
 - **cgroups memory/CPU limits** — enforce `resources.memory_mb` and `resources.max_cpu_percent` from the manifest via cgroup v2
+- **Landlock LSM filesystem enforcement** — unprivileged filesystem sandboxing without root (Linux 5.13+)
 - **Process-level isolation** — PID namespace so skills can't see or signal other processes
 - **OCI image support** — run skills packaged as container images, not just local directories
-- **Audit log aggregation** — stream execution traces to an external collector (OpenTelemetry)
 - **Wasm runtime option** — lightweight alternative to process-based execution for simple skills
 
 ---
@@ -375,6 +435,8 @@ examples/skills/
 Agent skill ecosystems today — ClawdHub, Anthropic's [Cowork plugins](https://github.com/anthropics/knowledge-work-plugins), Copilot plugins — are where npm was in 2015: no `npm audit`, no lockfiles, no isolation. A malicious skill looks identical to a legitimate one from the agent's perspective.
 
 SkillSandbox is a prototype of the enforcement layer these ecosystems need, designed to integrate with MCP-compatible frameworks (Claude Code, Cowork, any MCP client) as an MCP server. The principle is borrowed from container security's evolution: the industry moved from "trust the image" to "constrain the process." Agent skills need the same transition.
+
+SkillSandbox handles execution-level enforcement (what a single skill can reach). For session-level policy orchestration — cumulative cost budgets, violation thresholds, and circuit-breaker termination across multi-step agent runs — see the companion project [AgentTrace](https://github.com/theMachineClay/agenttrace). The two share a common OTel trace pipeline: SkillSandbox emits `sandbox.*` enforcement spans, AgentTrace emits `session.*` policy spans.
 
 ---
 
