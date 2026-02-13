@@ -36,12 +36,14 @@ async fn main() -> Result<()> {
         Commands::Run {
             skill_dir,
             dry_run,
+            watch,
             trace_output,
             args,
         } => {
             let exit_code = skillsandbox::runner::run_skill(
                 &skill_dir,
                 dry_run,
+                watch,
                 &args,
                 trace_output.as_deref(),
             )

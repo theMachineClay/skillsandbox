@@ -29,18 +29,21 @@ pub struct SkillRunResult {
 pub async fn run_skill(
     skill_dir: &Path,
     dry_run: bool,
+    watch: bool,
     extra_args: &[String],
     trace_output: Option<&Path>,
 ) -> Result<i32> {
-    let result = run_skill_inner(skill_dir, dry_run, extra_args, trace_output).await?;
+    let result = run_skill_inner(skill_dir, dry_run, watch, extra_args, trace_output).await?;
 
-    // Print results (CLI mode)
-    println!("{}", result.summary);
-    if !result.stdout.is_empty() {
-        println!("\n--- stdout ---\n{}", result.stdout.trim_end());
-    }
-    if !result.stderr.is_empty() {
-        eprintln!("\n--- stderr ---\n{}", result.stderr.trim_end());
+    // In watch mode, stdout/stderr already streamed via tracer. Still print summary.
+    if !watch {
+        println!("{}", result.summary);
+        if !result.stdout.is_empty() {
+            println!("\n--- stdout ---\n{}", result.stdout.trim_end());
+        }
+        if !result.stderr.is_empty() {
+            eprintln!("\n--- stderr ---\n{}", result.stderr.trim_end());
+        }
     }
 
     Ok(result.exit_code)
@@ -50,6 +53,7 @@ pub async fn run_skill(
 pub async fn run_skill_inner(
     skill_dir: &Path,
     dry_run: bool,
+    watch: bool,
     extra_args: &[String],
     trace_output: Option<&Path>,
 ) -> Result<SkillRunResult> {
@@ -60,8 +64,8 @@ pub async fn run_skill_inner(
 
     info!(skill = %manifest.skill.name, version = %manifest.skill.version, "Loaded manifest");
 
-    // 2. Create tracer
-    let tracer = Tracer::new(&manifest.skill.name, &manifest.skill.version);
+    // 2. Create tracer (with optional --watch real-time streaming)
+    let tracer = Tracer::with_watch(&manifest.skill.name, &manifest.skill.version, watch);
     tracer.record(TraceEvent::now(
         TraceEventKind::SkillStarted,
         format!("Starting skill '{}' v{}", manifest.skill.name, manifest.skill.version),

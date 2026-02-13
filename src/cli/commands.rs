@@ -28,6 +28,10 @@ pub enum Commands {
         #[arg(long, default_value_t = false)]
         dry_run: bool,
 
+        /// Stream enforcement events to stderr in real-time
+        #[arg(short, long, default_value_t = false)]
+        watch: bool,
+
         /// Path to write the execution trace JSON
         #[arg(long, value_name = "FILE")]
         trace_output: Option<PathBuf>,

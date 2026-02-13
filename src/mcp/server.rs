@@ -149,7 +149,7 @@ impl SkillSandboxMcp {
             return format!("Error: No skillsandbox.yaml found in: {}", req.skill_dir);
         }
 
-        match runner::run_skill_inner(&skill_dir, req.dry_run, &req.args, None).await {
+        match runner::run_skill_inner(&skill_dir, req.dry_run, false, &req.args, None).await {
             Ok(result) => format!(
                 "{summary}\n\n\
                  --- stdout ---\n{stdout}\n\n\

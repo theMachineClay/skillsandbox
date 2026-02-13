@@ -99,17 +99,24 @@ pub struct ExecutionTrace {
 }
 
 // ---------------------------------------------------------------------------
-// Tracer — thread-safe event collector.
+// Tracer — thread-safe event collector with optional real-time streaming.
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
 pub struct Tracer {
     inner: Arc<Mutex<ExecutionTrace>>,
+    /// When true, every recorded event is also printed to stderr in real-time.
+    watch: bool,
 }
 
 impl Tracer {
     /// Create a new tracer for a skill execution.
     pub fn new(skill_name: &str, skill_version: &str) -> Self {
+        Self::with_watch(skill_name, skill_version, false)
+    }
+
+    /// Create a new tracer with optional `--watch` real-time streaming.
+    pub fn with_watch(skill_name: &str, skill_version: &str, watch: bool) -> Self {
         let trace = ExecutionTrace {
             trace_id: Uuid::new_v4().to_string(),
             skill_name: skill_name.to_string(),
@@ -122,11 +129,15 @@ impl Tracer {
         };
         Self {
             inner: Arc::new(Mutex::new(trace)),
+            watch,
         }
     }
 
-    /// Record a trace event.
+    /// Record a trace event. If watch mode is enabled, also prints to stderr.
     pub fn record(&self, event: TraceEvent) {
+        if self.watch {
+            self.print_watch_event(&event);
+        }
         let is_violation = event.kind == TraceEventKind::PolicyViolation;
         let mut trace = self.inner.lock().unwrap();
         if is_violation {
@@ -135,19 +146,89 @@ impl Tracer {
         trace.events.push(event);
     }
 
+    /// Format and print a single event to stderr for --watch mode.
+    fn print_watch_event(&self, event: &TraceEvent) {
+        let ts = event.timestamp.format("%H:%M:%S%.3f");
+        let (icon, category) = match event.kind {
+            // Policy enforcement
+            TraceEventKind::NetworkEgressAllowed => ("\x1b[32m✅\x1b[0m", "POLICY  "),
+            TraceEventKind::NetworkEgressBlocked => ("\x1b[31m🔒\x1b[0m", "POLICY  "),
+            TraceEventKind::NetworkPolicyApplied => ("\x1b[34m🛡️\x1b[0m", "POLICY  "),
+            TraceEventKind::NetworkPolicyRemoved => ("\x1b[34m🛡️\x1b[0m", "POLICY  "),
+            TraceEventKind::PolicyViolation     => ("\x1b[31m🚨\x1b[0m", "VIOLATE "),
+            TraceEventKind::EnvVarAccess        => ("\x1b[33m🔒\x1b[0m", "POLICY  "),
+
+            // Filesystem
+            TraceEventKind::FileRead    => ("\x1b[36m📂\x1b[0m", "FS      "),
+            TraceEventKind::FileWrite   => ("\x1b[36m📂\x1b[0m", "FS      "),
+            TraceEventKind::FileBlocked => ("\x1b[31m🔒\x1b[0m", "FS      "),
+
+            // Syscalls
+            TraceEventKind::SyscallFiltered => ("\x1b[33m🔧\x1b[0m", "SECCOMP "),
+            TraceEventKind::SyscallBlocked  => ("\x1b[31m🔒\x1b[0m", "SECCOMP "),
+
+            // Output
+            TraceEventKind::Stdout => ("\x1b[37m📋\x1b[0m", "STDOUT  "),
+            TraceEventKind::Stderr => ("\x1b[33m📋\x1b[0m", "STDERR  "),
+
+            // Lifecycle
+            TraceEventKind::SkillStarted   => ("\x1b[32m▶\x1b[0m",  "START   "),
+            TraceEventKind::SkillCompleted => ("\x1b[32m✅\x1b[0m", "COMPLETE"),
+            TraceEventKind::SkillFailed    => ("\x1b[31m❌\x1b[0m", "FAILED  "),
+
+            // Other
+            TraceEventKind::DnsResolution    => ("\x1b[36m🔍\x1b[0m", "DNS     "),
+            TraceEventKind::ProcessSpawned   => ("\x1b[34m⚙️\x1b[0m", "PROCESS "),
+            TraceEventKind::ExitCode         => ("\x1b[34m⏹\x1b[0m",  "EXIT    "),
+            TraceEventKind::ResourceLimitHit => ("\x1b[31m⚠️\x1b[0m", "LIMIT   "),
+        };
+
+        // Truncate long messages for readability (full data is in trace.json)
+        let msg = if event.message.len() > 120 {
+            format!("{}...", &event.message[..117])
+        } else {
+            event.message.clone()
+        };
+
+        eprintln!("[{ts}] {icon} {category} {msg}");
+    }
+
     /// Mark the execution as completed.
     pub fn complete(&self, exit_code: i32) {
         let mut trace = self.inner.lock().unwrap();
         trace.completed_at = Some(Utc::now());
         trace.exit_code = Some(exit_code);
-        trace.events.push(TraceEvent::now(
+
+        let duration = trace
+            .completed_at
+            .map(|c| (c - trace.started_at).to_std().unwrap_or_default())
+            .map(|d| format!("{:.0}ms", d.as_millis()))
+            .unwrap_or_else(|| "?".to_string());
+        let violations = trace.policy_violations.len();
+
+        let event = TraceEvent::now(
             if exit_code == 0 {
                 TraceEventKind::SkillCompleted
             } else {
                 TraceEventKind::SkillFailed
             },
-            format!("Skill exited with code {}", exit_code),
-        ));
+            format!(
+                "exit_code={}  duration={}  violations={}{}",
+                exit_code,
+                duration,
+                violations,
+                if violations > 0 {
+                    format!(" ({} prevented)", violations)
+                } else {
+                    String::new()
+                }
+            ),
+        );
+
+        if self.watch {
+            self.print_watch_event(&event);
+        }
+        trace.events.push(event);
     }
 
     /// Get a snapshot of the current trace.
@@ -231,5 +312,30 @@ mod tests {
         let json = tracer.to_json();
         assert!(json.contains("weather-lookup"));
         assert!(json.contains("network_egress_allowed"));
+    }
+
+    #[test]
+    fn watch_mode_still_records_events() {
+        // Watch mode should record events exactly the same as normal mode
+        // (the stderr printing is a side effect we don't assert here)
+        let tracer = Tracer::with_watch("watched-skill", "0.2.0", true);
+        tracer.record(TraceEvent::now(
+            TraceEventKind::SkillStarted,
+            "starting".to_string(),
+        ));
+        tracer.record(TraceEvent::now(
+            TraceEventKind::NetworkEgressBlocked,
+            "BLOCKED webhook.site:443".to_string(),
+        ));
+        tracer.record(TraceEvent::now(
+            TraceEventKind::PolicyViolation,
+            "undeclared egress attempt".to_string(),
+        ));
+        tracer.complete(0);
+
+        let trace = tracer.snapshot();
+        assert_eq!(trace.events.len(), 4); // started + blocked + violation + completed
+        assert_eq!(trace.policy_violations.len(), 1);
+        assert!(trace.completed_at.is_some());
     }
 }
