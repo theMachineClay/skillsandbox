@@ -44,6 +44,11 @@ anyhow = "1"
 # MCP server (Model Context Protocol)
 rmcp = { version = "0.13", features = ["server", "transport-io"], optional = true }
 
+# OpenTelemetry (optional, for exporting traces via OTLP)
+opentelemetry = { version = "0.28", features = ["trace"], optional = true }
+opentelemetry_sdk = { version = "0.28", features = ["trace", "rt-tokio"], optional = true }
+opentelemetry-otlp = { version = "0.28", features = ["trace", "http-proto", "reqwest-blocking-client"], optional = true }
+
 # Network egress enforcement (iptables wrapper)
 # We shell out to `iptables` for the MVP; no extra crate needed.
 
@@ -62,3 +67,4 @@ predicates = "3"
 [features]
 default = ["mcp"]
 mcp = ["dep:rmcp"]
+otel = ["dep:opentelemetry", "dep:opentelemetry_sdk", "dep:opentelemetry-otlp"]

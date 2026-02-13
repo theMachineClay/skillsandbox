@@ -32,6 +32,10 @@ pub enum Commands {
         #[arg(short, long, default_value_t = false)]
         watch: bool,
 
+        /// Export execution trace as OpenTelemetry spans via OTLP
+        #[arg(long, default_value_t = false)]
+        otel: bool,
+
         /// Path to write the execution trace JSON
         #[arg(long, value_name = "FILE")]
         trace_output: Option<PathBuf>,

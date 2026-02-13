@@ -37,6 +37,7 @@ async fn main() -> Result<()> {
             skill_dir,
             dry_run,
             watch,
+            otel,
             trace_output,
             args,
         } => {
@@ -44,6 +45,7 @@ async fn main() -> Result<()> {
                 &skill_dir,
                 dry_run,
                 watch,
+                otel,
                 &args,
                 trace_output.as_deref(),
             )

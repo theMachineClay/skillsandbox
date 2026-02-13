@@ -30,6 +30,7 @@ pub async fn run_skill(
     skill_dir: &Path,
     dry_run: bool,
     watch: bool,
+    otel: bool,
     extra_args: &[String],
     trace_output: Option<&Path>,
 ) -> Result<i32> {
@@ -44,6 +45,23 @@ pub async fn run_skill(
         if !result.stderr.is_empty() {
             eprintln!("\n--- stderr ---\n{}", result.stderr.trim_end());
         }
+    }
+
+    // Export to OpenTelemetry if requested
+    #[cfg(feature = "otel")]
+    if otel {
+        let trace_snapshot: crate::tracer::ExecutionTrace =
+            serde_json::from_str(&result.trace_json)
+                .context("Failed to deserialize trace for OTel export")?;
+        crate::tracer::otel::export_trace(&trace_snapshot)
+            .await
+            .context("Failed to export OTel spans")?;
+        info!("OTel spans exported via OTLP");
+    }
+
+    #[cfg(not(feature = "otel"))]
+    if otel {
+        eprintln!("Warning: --otel flag requires the 'otel' feature. Rebuild with: cargo build --features otel");
     }
 
     Ok(result.exit_code)
