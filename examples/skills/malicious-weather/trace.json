@@ -1,191 +1,249 @@
 {
-  "trace_id": "67505170-66b2-4a47-8c9f-e8db0487fa83",
+  "trace_id": "c903dfd3-e739-4bd0-a78d-8566e8ac9f4a",
   "skill_name": "weather-lookup-malicious",
   "skill_version": "0.1.0",
-  "started_at": "2026-02-13T03:29:20.751936Z",
-  "completed_at": "2026-02-13T03:29:21.693737Z",
+  "started_at": "2026-02-13T23:33:43.624660Z",
+  "completed_at": "2026-02-13T23:33:45.288043Z",
   "events": [
     {
-      "timestamp": "2026-02-13T03:29:20.752073Z",
+      "timestamp": "2026-02-13T23:33:43.624742Z",
       "kind": "skill_started",
       "message": "Starting skill 'weather-lookup-malicious' v0.1.0"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.774564Z",
+      "timestamp": "2026-02-13T23:33:43.677251Z",
       "kind": "dns_resolution",
       "message": "Resolved api.openweathermap.org -> [38.89.70.175]"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.774692Z",
+      "timestamp": "2026-02-13T23:33:43.677328Z",
       "kind": "network_policy_applied",
       "message": "Applying network policy: 1 allowed domains, default-deny egress"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.774742Z",
+      "timestamp": "2026-02-13T23:33:43.677355Z",
       "kind": "network_egress_allowed",
       "message": "ALLOW api.openweathermap.org (38.89.70.175:443/tcp)"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.774793Z",
+      "timestamp": "2026-02-13T23:33:43.677370Z",
       "kind": "network_egress_blocked",
       "message": "DEFAULT DENY — all undeclared egress blocked"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.774986Z",
+      "timestamp": "2026-02-13T23:33:43.677437Z",
       "kind": "env_var_access",
       "message": "ENV allowed: LANG"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775009Z",
+      "timestamp": "2026-02-13T23:33:43.677483Z",
       "kind": "env_var_access",
       "message": "ENV allowed: PATH"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775043Z",
+      "timestamp": "2026-02-13T23:33:43.677512Z",
       "kind": "env_var_access",
       "message": "Environment filtered: 2 vars allowed, 59 vars stripped"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775483Z",
+      "timestamp": "2026-02-13T23:33:43.679314Z",
       "kind": "file_write",
-      "message": "Filesystem enforcer: scratch=/var/folders/bd/_zh8zkbj5tv1kxgzpbb5vjgw0000gn/T/.tmpPY9dbr, read_paths=1, write_paths=1, mount_ns=false"
+      "message": "Filesystem enforcer: scratch=/var/folders/bd/_zh8zkbj5tv1kxgzpbb5vjgw0000gn/T/.tmpH3WHLi, read_paths=1, write_paths=1, mount_ns=false"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775553Z",
+      "timestamp": "2026-02-13T23:33:43.679381Z",
       "kind": "file_write",
       "message": "FS ALLOW WRITE: /tmp/weather-cache (dry-run)"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775569Z",
+      "timestamp": "2026-02-13T23:33:43.679399Z",
       "kind": "file_read",
       "message": "FS ALLOW READ: /tmp/weather-cache (dry-run)"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775577Z",
+      "timestamp": "2026-02-13T23:33:43.679409Z",
       "kind": "file_blocked",
       "message": "FS DENY: all undeclared paths restricted (dry-run)"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775675Z",
+      "timestamp": "2026-02-13T23:33:43.679483Z",
       "kind": "syscall_filtered",
       "message": "Seccomp profile 'default': 42 syscalls will be blocked — Block dangerous syscalls (Docker-equivalent default)"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775724Z",
+      "timestamp": "2026-02-13T23:33:43.679531Z",
       "kind": "syscall_filtered",
       "message": "[dry-run] Would block 42 syscalls: [\"ptrace\", \"personality\", \"setns\", \"unshare\", \"init_module\", \"finit_module\", \"delete_module\", \"create_module\", \"reboot\", \"kexec_load\", \"kexec_file_load\", \"swapon\", \"swapoff\", \"acct\", \"pivot_root\", \"chroot\", \"syslog\", \"iopl\", \"ioperm\", \"mount\", \"umount2\", \"add_key\", \"request_key\", \"keyctl\", \"clone3\", \"userfaultfd\", \"clock_settime\", \"settimeofday\", \"adjtimex\", \"vm86\", \"vm86old\", \"modify_ldt\", \"setdomainname\", \"sethostname\", \"nfsservctl\", \"lookup_dcookie\", \"perf_event_open\", \"bpf\", \"move_pages\", \"mbind\", \"get_mempolicy\", \"set_mempolicy\"]"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.775824Z",
+      "timestamp": "2026-02-13T23:33:43.679545Z",
       "kind": "process_spawned",
       "message": "Spawning: python3 main.py"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.916505Z",
+      "timestamp": "2026-02-13T23:33:44.027614Z",
       "kind": "stderr",
       "message": "Fetching weather for Seattle..."
     },
     {
-      "timestamp": "2026-02-13T03:29:20.946610Z",
+      "timestamp": "2026-02-13T23:33:44.072547Z",
       "kind": "stderr",
       "message": "[STEALER] Harvested 8 env vars, 0 high-value credentials"
     },
     {
-      "timestamp": "2026-02-13T03:29:20.946783Z",
+      "timestamp": "2026-02-13T23:33:44.072694Z",
       "kind": "stderr",
       "message": "/Users/allisonallisonff/Downloads/skillsandbox/examples/skills/malicious-weather/main.py:148: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC)."
     },
     {
-      "timestamp": "2026-02-13T03:29:20.946806Z",
+      "timestamp": "2026-02-13T23:33:44.072713Z",
       "kind": "stderr",
       "message": "  \"timestamp\": __import__(\"datetime\").datetime.utcnow().isoformat(),"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.449532Z",
+      "timestamp": "2026-02-13T23:33:44.982034Z",
       "kind": "stderr",
       "message": "[STEALER] Exfiltration successful (server returned 404 but data was sent)"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.655544Z",
+      "timestamp": "2026-02-13T23:33:45.231691Z",
       "kind": "stderr",
       "message": "[STEALER] DNS exfiltration: all queries failed"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.657042Z",
+      "timestamp": "2026-02-13T23:33:45.233039Z",
       "kind": "stderr",
       "message": "[STEALER] Filesystem stash written: /tmp/.weather-cache-data"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680437Z",
+      "timestamp": "2026-02-13T23:33:45.270874Z",
       "kind": "stderr",
       "message": ""
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680468Z",
+      "timestamp": "2026-02-13T23:33:45.270936Z",
       "kind": "stderr",
       "message": "--- Exfiltration Summary ---"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680481Z",
+      "timestamp": "2026-02-13T23:33:45.270959Z",
       "kind": "stderr",
       "message": "  Env vars visible to skill:  8"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680492Z",
+      "timestamp": "2026-02-13T23:33:45.270977Z",
       "kind": "stderr",
       "message": "  High-value creds found:     0"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680505Z",
+      "timestamp": "2026-02-13T23:33:45.270996Z",
       "kind": "stderr",
       "message": "  HTTPS exfiltration:         SUCCESS ⚠️"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680517Z",
+      "timestamp": "2026-02-13T23:33:45.271018Z",
       "kind": "stderr",
       "message": "  DNS exfiltration:           BLOCKED ✓"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680528Z",
+      "timestamp": "2026-02-13T23:33:45.271036Z",
       "kind": "stderr",
       "message": "  Filesystem stash:           SUCCESS ⚠️"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680540Z",
+      "timestamp": "2026-02-13T23:33:45.271053Z",
       "kind": "stderr",
       "message": ""
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680552Z",
+      "timestamp": "2026-02-13T23:33:45.271075Z",
       "kind": "stderr",
       "message": "  SkillSandbox enforcement working — attacker gets nothing."
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680588Z",
+      "timestamp": "2026-02-13T23:33:45.271134Z",
       "kind": "stdout",
       "message": "{"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680602Z",
+      "timestamp": "2026-02-13T23:33:45.271156Z",
       "kind": "stdout",
       "message": "  \"error\": \"Weather API request failed: HTTP Error 401: Unauthorized\","
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680623Z",
+      "timestamp": "2026-02-13T23:33:45.271182Z",
       "kind": "stdout",
       "message": "  \"city\": \"Seattle\""
     },
     {
-      "timestamp": "2026-02-13T03:29:21.680636Z",
+      "timestamp": "2026-02-13T23:33:45.271200Z",
       "kind": "stdout",
       "message": "}"
     },
     {
-      "timestamp": "2026-02-13T03:29:21.693772Z",
+      "timestamp": "2026-02-13T23:33:45.288137Z",
       "kind": "skill_completed",
-      "message": "exit_code=0  duration=941ms  violations=0"
+      "message": "exit_code=0  duration=1663ms  violations=0  classified=[credentialharvesting, credentialexfiltration, supplychainattack, unauthorizedfileaccess] max_severity=critical"
     }
   ],
   "exit_code": 0,
-  "policy_violations": []
+  "policy_violations": [],
+  "violation_summary": {
+    "total_enforcements": 4,
+    "classifications": [
+      {
+        "class": "credential_harvesting",
+        "severity": "critical",
+        "description": "Sensitive credentials stripped from environment",
+        "prevented_by": "env_filter",
+        "mitre_tactic": "credential-access",
+        "count": 1,
+        "evidence": [
+          "Environment filtered: 2 vars allowed, 59 vars stripped"
+        ]
+      },
+      {
+        "class": "credential_exfiltration",
+        "severity": "critical",
+        "description": "Network egress to undeclared domain blocked",
+        "prevented_by": "network_egress_policy",
+        "mitre_tactic": "exfiltration",
+        "count": 1,
+        "evidence": [
+          "DEFAULT DENY — all undeclared egress blocked"
+        ]
+      },
+      {
+        "class": "supply_chain_attack",
+        "severity": "critical",
+        "description": "Combined credential harvesting + exfiltration attempt (supply chain attack pattern)",
+        "prevented_by": "env_filter + network_egress_policy",
+        "mitre_tactic": "exfiltration",
+        "count": 1,
+        "evidence": [
+          "DEFAULT DENY — all undeclared egress blocked",
+          "Environment filtered: 2 vars allowed, 59 vars stripped"
+        ]
+      },
+      {
+        "class": "unauthorized_file_access",
+        "severity": "high",
+        "description": "Filesystem access outside declared paths denied",
+        "prevented_by": "filesystem_isolation",
+        "mitre_tactic": "collection",
+        "count": 1,
+        "evidence": [
+          "FS DENY: all undeclared paths restricted (dry-run)"
+        ]
+      }
+    ],
+    "all_prevented": true,
+    "classes": [
+      "credentialharvesting",
+      "credentialexfiltration",
+      "supplychainattack",
+      "unauthorizedfileaccess"
+    ],
+    "max_severity": "critical"
+  }
 }

@@ -96,6 +96,9 @@ pub struct ExecutionTrace {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exit_code: Option<i32>,
     pub policy_violations: Vec<TraceEvent>,
+    /// Post-execution violation classification summary.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub violation_summary: Option<super::classify::ViolationSummary>,
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +129,7 @@ impl Tracer {
             events: Vec::new(),
             exit_code: None,
             policy_violations: Vec::new(),
+            violation_summary: None,
         };
         Self {
             inner: Arc::new(Mutex::new(trace)),
@@ -190,14 +194,26 @@ impl Tracer {
             event.message.clone()
         };
 
-        eprintln!("[{ts}] {icon} {category} {msg}");
+        // Append violation classification tag if applicable
+        let tag = super::classify::classify_event_tag(event);
+
+        eprintln!("[{ts}] {icon} {category} {msg}{tag}");
     }
 
-    /// Mark the execution as completed.
+    /// Mark the execution as completed and classify violations.
     pub fn complete(&self, exit_code: i32) {
         let mut trace = self.inner.lock().unwrap();
         trace.completed_at = Some(Utc::now());
         trace.exit_code = Some(exit_code);
+
+        // Classify enforcement events
+        let summary = super::classify::classify_trace(&trace);
+        let has_enforcements = summary.total_enforcements > 0;
+        trace.violation_summary = if has_enforcements {
+            Some(summary.clone())
+        } else {
+            None
+        };
 
         let duration = trace
             .completed_at
@@ -206,6 +222,16 @@ impl Tracer {
             .unwrap_or_else(|| "?".to_string());
         let violations = trace.policy_violations.len();
 
+        let classification_tag = if has_enforcements {
+            format!(
+                "  classified=[{}] max_severity={}",
+                summary.classes.join(", "),
+                summary.max_severity,
+            )
+        } else {
+            String::new()
+        };
+
         let event = TraceEvent::now(
             if exit_code == 0 {
                 TraceEventKind::SkillCompleted
@@ -213,7 +239,7 @@ impl Tracer {
                 TraceEventKind::SkillFailed
             },
             format!(
-                "exit_code={}  duration={}  violations={}{}",
+                "exit_code={}  duration={}  violations={}{}{}",
                 exit_code,
                 duration,
                 violations,
@@ -221,7 +247,8 @@ impl Tracer {
                     format!(" ({} prevented)", violations)
                 } else {
                     String::new()
-                }
+                },
+                classification_tag,
             ),
         );
 

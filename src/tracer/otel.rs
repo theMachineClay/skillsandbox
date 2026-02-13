@@ -196,6 +196,28 @@ pub async fn export_trace(trace: &ExecutionTrace) -> Result<()> {
             span.set_attribute(KeyValue::new("sandbox.violations.all_prevented", true));
         }
 
+        // Add violation classification to root span if present
+        if let Some(ref summary) = trace.violation_summary {
+            span.set_attribute(KeyValue::new(
+                "sandbox.classification.total_enforcements",
+                summary.total_enforcements as i64,
+            ));
+            span.set_attribute(KeyValue::new(
+                "sandbox.classification.max_severity",
+                summary.max_severity.clone(),
+            ));
+            span.set_attribute(KeyValue::new(
+                "sandbox.classification.classes",
+                summary.classes.join(", "),
+            ));
+            for cv in &summary.classifications {
+                span.set_attribute(KeyValue::new(
+                    format!("sandbox.classification.{:?}.count", cv.class).to_lowercase(),
+                    cv.count as i64,
+                ));
+            }
+        }
+
         // Set span status based on exit code
         match trace.exit_code {
             Some(0) => span.set_status(Status::Ok),
